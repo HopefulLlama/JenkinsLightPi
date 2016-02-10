@@ -1,0 +1,14 @@
+{
+	"jobName": "Example Name",
+	"pins": {
+		"success": 2,
+		"running": 3,
+		"failure": 4
+	},
+	"urls": [
+		"http://jenkins-hostname.com/job/ProjectOne/api/json",
+		"http://jenkins-hostname.com/job/ProjectTwo/api/json",
+		"http://jenkins-hostname.com/jon/ProjectN/api/json"
+	],
+	"frequency": 900
+}
