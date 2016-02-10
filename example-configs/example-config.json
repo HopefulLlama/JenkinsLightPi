@@ -6,9 +6,9 @@
 		"failure": 4
 	},
 	"urls": [
-		"http://jenkins-hostname.com/job/ProjectOne/api/json",
-		"http://jenkins-hostname.com/job/ProjectTwo/api/json",
-		"http://jenkins-hostname.com/jon/ProjectN/api/json"
+		"http://jenkins-hostname.com/job/ProjectOne",
+		"http://jenkins-hostname.com/job/ProjectTwo",
+		"http://jenkins-hostname.com/jon/ProjectN"
 	],
 	"frequency": 900
 }
