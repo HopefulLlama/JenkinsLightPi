@@ -9,76 +9,82 @@ try:
 		config = json.load(configFile)
 
 		wiringpi2.wiringPiSetupGpio()
-		print ("Configuration loaded for " + config.get("jobName") + " job.")
+		print ("Configuration loaded for " + config["jobName"] + " job.")
 		print ("")
 
 		print ("Loading GPIO pins")
-		pins = config.get("pins")
-		print ("Using GPIO pin: " + str(pins.get("success")) + " as 'success'.")
-		wiringpi2.pinMode(pins.get("success"), 1)
-		print ("Using GPIO pin: " + str(pins.get("running")) + " as 'running'.")
-		wiringpi2.pinMode(pins.get("running"), 1)
-		print ("Using GPIO pin: " + str(pins.get("failure")) + " as 'failure'.")
-		wiringpi2.pinMode(pins.get("failure"), 1)
+		pins = config["pins"]
 
+		def setupPin(name, pinsConfig):
+			print ("Using GPIO pin:"  + str(pinsConfig[name]) + " as '" + name + "'.")
+			wiringpi2.pinMode(pinsConfig[name], 1)
+
+		for pin in pins.keys():
+			setupPin(pin, pins);
+
+		print ("")
 		print ("URLs to test for: ")
 
-		for url in config.get("urlPrefix"):
+		for url in config["urlPrefix"]:
 			print ("   " + url)
 
 		print ("")
-		print ("Polling at frequency of " + str(config.get("frequency")) + " seconds.")
-
+		print ("Polling at frequency of " + str(config["frequency"]) + " seconds.")
+		print ("")
 		print ("Starting job...")
+
+		def setLEDs(pinConfig, outputDict):
+			for key in outputDict.keys():
+				wiringpi2.digitalWrite(pinConfig[key], outputDict[key])
+
+		def reportStatus(output, pinConfig, pinDict):
+			print output
+			setLEDs(pinConfig, pinDict)
+
+		def pollUrls(urlPrefix):
+			status = {"building": [], "lastResult": []}
+			for url in urlPrefix:
+				buildingResponse = requests.get(url + "/lastBuild/api/json").json()
+				status["building"].append(buildingResponse["building"])
+
+				resultResponse = requests.get(url + "/lastCompletedBuild/api/json").json()
+				status["lastResult"].append(resultResponse["result"])
+			return status;
+			
+		def reportBuild(status):
+                        if "FAILURE" in status:
+                                reportStatus(config["jobName"] + " is failing!", pins, {"success": 0, "failure": 1})
+                        elif "SUCCESS" in status:
+                                reportStatus(config["jobName"] + " is passing!", pins, {"success": 1, "failure": 0})
+                        else:
+                                reportStatus("No completion status found for " + config["jobName"], pins, {"success": 0, "failure": 0})			
+
+		def reportBuilding(status):
+                        if True in status:
+                                reportStatus(config["jobName"] + " has a running task.", pins, {"running": 1})
+                        elif False in status:
+                                reportStatus(config["jobName"] + " has no running tasks.", pins, {"running": 0})
+                        else:
+                                reportStatus(config["jobName"] + " could not find build status.", pins, {"running": 0})
+
 
 		s = sched.scheduler(time.time, time.sleep)
 		def pollAndReportOnUrls(sc):
-			lastBuildsBuilding = []
-			lastCompletedBuildsStatus = []
-			for url in config.get("urlPrefix"):
-				lastBuildsResponse = requests.get(url + "/lastBuild/api/json").json()
-				lastBuildsBuilding.append(lastBuildsResponse.get("building"))
-
-				lastCompletedBuildsResponse = requests.get(url + "/lastCompletedBuild/api/json").json()
-				lastCompletedBuildsStatus.append(lastCompletedBuildsResponse.get("result"))
-
-			# Get last completed build color
-			if "FAILURE" in lastCompletedBuildsStatus:
-				print (config.get("jobName") + " is failing!")
-				wiringpi2.digitalWrite(pins.get("failure"), 1)
-				wiringpi2.digitalWrite(pins.get("success"), 0)
-			elif "SUCCESS" in lastCompletedBuildsStatus:
-				print (config.get("jobName") + " is passing!")
-                	        wiringpi2.digitalWrite(pins.get("failure"), 0)
-                        	wiringpi2.digitalWrite(pins.get("success"), 1)
-			else:
-				print("No completion status found for " + config.get("jobName"))
-				wiringpi2.digitalWrite(pins.get("failure"), 0)
-				wiringpi2.digitalWrite(pins.get("success"), 0)
-
-			# Get building status
-			if True in lastBuildsBuilding: 
-				print (config.get("jobName") + " has a running task.")
-				wiringpi2.digitalWrite(pins.get("running"), 1)
-			elif False in lastBuildsBuilding:
-				print (config.get("jobName") + " has no running tasks.")
-				wiringpi2.digitalWrite(pins.get("running"), 0)
-			else:
-				print (config.get("jobName") + " could not find build status.")
-				wiringpi2.digitalWrite(pins.get("running"), 0)
-
+			status = pollUrls(config["urlPrefix"])
+			# Report last completed build color
+			reportBuild(status["lastResult"])
+			# Report building status
+			reportBuilding(status["building"])
 			# Reschedule the same job
 			if sc is not None:
-				sc.enter(config.get("frequency"), 1, pollAndReportOnUrls, (sc,))
+				sc.enter(config["frequency"], 1, pollAndReportOnUrls, (sc,))
 
+		# Do a poll and report now, and repeat on given frequency
 		pollAndReportOnUrls(None)
-		s.enter(config.get("frequency"), 1, pollAndReportOnUrls, (s,))
+		s.enter(config["frequency"], 1, pollAndReportOnUrls, (s,))
 		s.run()	
 	else:
 		print ("Please provide configuration file path as parameter.")
 		print ("Exiting...")
 except:
-	print ("Some sort of exception occurred.")
-	wiringpi2.digitalWrite(pins.get("running"), 0)
-	wiringpi2.digitalWrite(pins.get("failure"), 0)
-	wiringpi2.digitalWrite(pins.get("success"), 0)
+	reportStatus("Some sort of exception occurred. Turning off all LEDs...", pins, {"success": 0, "failure": 0, "running": 0})
