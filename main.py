@@ -18,25 +18,20 @@ def pollAndReportOnUrls(sc, config):
 def main():
 	if len(sys.argv) == 2:
 		config = config_loader.load(sys.argv[1])
-
 		wiringpi2.wiringPiSetupGpio()
 		print ("Configuration loaded for " + config["jobName"] + " job.\n")
 
 		print ("Loading GPIO pins")
-		pins = config["pins"]
-
-		for pin in pins.keys():
-			setupPin(pin, pins);
+		for pin in config["pins"].keys():
+			setupPin(pin, config["pins"]);
 
 		print ("\nURLs to test for: ")
-
 		for url in config["urlPrefix"]:
 			print ("   " + url)
 
 		print ("\nPolling at frequency of " + str(config["frequency"]) + " seconds.")
 		
 		print ("\nStarting job...")
-
 		s = sched.scheduler(time.time, time.sleep)
 		# Do a poll and report now, and repeat on given frequency
 		pollAndReportOnUrls(None, config)
