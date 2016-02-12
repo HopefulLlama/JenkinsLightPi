@@ -2,7 +2,7 @@
 	"jobName": "Example Name",
 	"pins": {
 		"success": 2,
-		"running": 3,
+		"building": 3,
 		"failure": 4
 	},
 	"urls": [
