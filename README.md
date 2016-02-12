@@ -17,7 +17,7 @@ An example configuration file can be found at: `example-configs/example-configs.
 
 `pins.failure <integer>`: The GPIO pin used for the 'failure' LED.
 
-`pins.running <integer>`: The GPIO pin used for the 'running' LED.
+`pins.building <integer>`: The GPIO pin used for the 'building' LED.
 
 `urls <Array<string>>`: URLs which JenkinsLightPi will contact to determine job status. The script will suffix the URLs given with `/lastBuild/api/json` and `/lastCompletedBulid/api/json` when getting status information.
 
