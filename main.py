@@ -16,7 +16,7 @@ def pollAndReportOnUrls(sc, config):
 
 	# Reschedule the same job
 	if sc is not None:
-		sc.enter(config["frequency"], 1, pollAndReportOnUrls, (sc,))
+		sc.enter(config["frequency"], 1, pollAndReportOnUrls, (sc, config))
 
 def main():
 	if len(sys.argv) == 2:

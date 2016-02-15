@@ -1,0 +1,14 @@
+{
+	"jobName": "P Feature -> Portal Smoke Tests",
+	"pins": {
+		"success": 2,
+		"building": 4,
+		"failure": 3
+	},
+	"urlPrefix": [
+		"http://hudson-slave-02.dev.croydon.romonet.com:8080/job/P%20feature",
+		"http://hudson-slave-02.dev.croydon.romonet.com:8080/job/P%20feature%20archive",
+		"http://hudson-slave-02.dev.croydon.romonet.com:8080/job/Portal%20Test%20-%20Smoke"
+	],
+	"frequency": 300
+}
